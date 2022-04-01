@@ -20,25 +20,31 @@ fun main(args: Array<String>) {
     val validator = SongValidatorNoDuplicateTitles()
     val processor = SongChorusCombiner()
     val statCounter = StatCounter()
-    val report = ReportBuilder(source)
+    val report = ReportBuilder(source,target.resolve("report.csv"))
+    val skipDuplicates = DuplicateSkipper()
+    val duplicateTitleRenamer = DuplicateTitleRenamer()
+
+    val songOutputs = listOf<SongTargets>(
+        report,
+        statCounter,
+        ZipXMLWriter(target.resolve("all-songs.zip")),
+        FileSystemXMLWriter(target)
+    )
 
     forAllFiles(source){ file:File ->
         if (file.extension == "ppt") {
             try {
                 extractor.extract(file)?.let { initial_song ->
                     val song = processor.process(initial_song)
-                    validator.raise(song,"while processing $file")
-                    val name = file.nameWithoutExtension
-                    val firstCharacter = name.first().toString()
-                    val path = target.resolve( firstCharacter )
-                    if (!path.isDirectory){
-                        path.mkdirs()
+                    if (skipDuplicates.isThisANewSong(song) ) {
+                        duplicateTitleRenamer.process(song).let { retitledsong ->
+                            validator.raise(retitledsong, "while processing $file")
+                            songOutputs.forEach { it.process(file,retitledsong) }
+                        }
+                    }else{
+                        report.recordDuplicate(file, song)
+                        logger.info("Skipped a duplicate song $file")
                     }
-                    val outputName = path.resolve(file.nameWithoutExtension + ".xml")
-                    song.toXml(outputName)
-                    statCounter.count(song)
-                    report.recordSuccess(file,song)
-                    //logger.info("Converted ${file.name} to ${outputName.name}  \"${song.metadata["title"]}\"")
                 }
             }catch(e:Exception){
                 report.recordFailure(file,e)
@@ -47,8 +53,8 @@ fun main(args: Array<String>) {
             }
         }
     }
+    songOutputs.forEach { it.complete() }
     logger.info(statCounter.toString())
-    report.toCsv(target.resolve("report.csv"))
 }
 
 fun forAllFiles(start: File, function: (File) -> Unit) {

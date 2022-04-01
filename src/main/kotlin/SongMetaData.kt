@@ -12,4 +12,9 @@ class SongMetaData(private val metadata:Map<String,String> = mapOf()){
         metadata.map { it.key+"="+it.value }.joinToString(", ")
 
     operator fun get(key: String) = metadata[key]
+
+    fun sortedFlattenedString(): String {
+       val keys = metadata.keys.sorted()
+        return keys.joinToString(",") { "${it}=\"${metadata[it]}\"" }
+    }
 }

@@ -19,6 +19,6 @@ data class Verse(val name:String, val lines:List<String> ){
 
     fun wordsMatch(hay: Verse): Boolean = this.flatString() == hay.flatString()
 
-    private fun flatString():String = lines.joinToString("\n")
+    fun flatString():String = lines.joinToString("\n")
 
 }

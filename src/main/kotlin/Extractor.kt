@@ -93,7 +93,6 @@ class SlideExtractor<S: Shape<S, P>,P: TextParagraph<S, P, out TextRun?>>(privat
                     continue
                 }else{
                     output.add(active)
-                    active = null
                 }
             }
             active = TextRunInfo( textRun.rawText , textSize , textRun.isBold , textRun.isItalic)
@@ -110,9 +109,9 @@ class SlideExtractor<S: Shape<S, P>,P: TextParagraph<S, P, out TextRun?>>(privat
 
     private val parserRegexps = listOf(
         ParserLine(Regex("Words and music by ([A-Za-z. ]*)", RegexOption.IGNORE_CASE) ){
-                match, d -> d.set("author",match.groupValues[1].autoTrim(" Copyright").trim())},
+                match, d -> d.set("author",match.groupValues[1].autoTrim(" Copyright").autoTrim("Published").trim())},
         ParserLine(Regex("Words by ([A-Za-z. ]*)",RegexOption.IGNORE_CASE) ){
-                match,d ->d.set("author",match.groupValues[1].autoTrim(" Copyright").trim())},
+                match,d ->d.set("author",match.groupValues[1].autoTrim(" Copyright").autoTrim("Published").trim())},
         ParserLine(Regex("Copyright (.*)",RegexOption.IGNORE_CASE) ){
                 match,d -> d.set("copyright",match.groupValues[1].trim())},
         ParserLine(Regex("Based on (.*)",RegexOption.IGNORE_CASE) ){

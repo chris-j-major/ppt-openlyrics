@@ -1,6 +1,6 @@
 import java.io.File
 
-class ReportBuilder( private val basePath:File ) {
+class ReportBuilder(private val basePath: File, private val output: File):SongTargets {
 
     private val rows = mutableListOf<ReportRow>(
         ReportRow("file" , "result" , "title" , "author",
@@ -27,8 +27,18 @@ class ReportBuilder( private val basePath:File ) {
     fun recordFailure(file: File, e: Exception) {
         rows.add( ReportRow( trimFile(file) , e.toString() ))
     }
+    fun recordDuplicate(file: File, song: Song) {
+        rows.add( ReportRow( trimFile(file) , "duplicate",song.metadata["title"]?:""))
+    }
 
     fun toCsv(file: File) {
         file.writeText( rows.joinToString("\n") { x -> x.toString() })
     }
+
+    override fun process(source: File, song: Song) = recordSuccess(source,song)
+
+    override fun complete() {
+        this.toCsv(output)
+    }
+
 }

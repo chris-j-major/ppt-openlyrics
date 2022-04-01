@@ -2,6 +2,7 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.io.File
 import java.io.FileWriter
+import java.io.Writer
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
@@ -12,8 +13,7 @@ import javax.xml.transform.stream.StreamResult
 
 
 data class Song( val metadata:SongMetaData, val verses:List<Verse>, val songOrder:String? = null){
-    fun toXml(output: File) {
-
+    fun toXml(output: Writer) {
         val dbf = DocumentBuilderFactory.newInstance()
         val db = dbf.newDocumentBuilder()
         val dom = db.newDocument()
@@ -36,7 +36,7 @@ data class Song( val metadata:SongMetaData, val verses:List<Verse>, val songOrde
 
         tr.transform(
             DOMSource(dom),
-            StreamResult( FileWriter(output) )
+            StreamResult( output )
         )
     }
 
@@ -87,9 +87,10 @@ data class Song( val metadata:SongMetaData, val verses:List<Verse>, val songOrde
             verseOrderElem.textContent = songOrder
         }
 
-
-
         return propertiesElem
     }
 
+    fun convertToFlatContent(): String = metadata.sortedFlattenedString() + "|"+this.songTextInFixedOrder()
+
+    private fun songTextInFixedOrder(): String = (songOrder ?: "") + verses.joinToString("\n") { it.flatString() }
 }
