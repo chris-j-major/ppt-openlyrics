@@ -1,5 +1,6 @@
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.Exception
 import kotlin.system.exitProcess
 
 open class SongValidator {
@@ -13,12 +14,16 @@ open class SongValidator {
         }
     }
 
-    fun log(song: Song) {
+    fun raise(song: Song, context:String="") {
+        val warnings = mutableListOf<String>()
         this.check(song){ issue->
             logger.warn(issue)
+            warnings.add(issue)
+        }
+        if (warnings.isNotEmpty()){
+            throw Exception("Song failed the validation checks $context: $warnings")
         }
     }
-
 
     protected open fun check(song: Song, callback:(issue:String)->Unit) {
         val title = song.metadata["title"]
